@@ -648,6 +648,62 @@
         </div>
       </article>
 
+       <!-- LIDAR GAUGE -->
+      <article class="project-card" data-category="robotics mechatronics">
+        <div class="project-image">
+          <span class="project-badge">🏆 Featured</span>
+          <img src="images/LidarPic2.JPG" alt="LIDAR GAUGE Project" />
+        </div>
+        <div class="project-content">
+          <h3 class="project-title">LIDAR GAUGE: A PRECISION DISTANCE MEASUREMENT DEVICE</h3>
+          
+          <div class="project-tech-tags">
+            <span class="tech-tag">Arduino</span>
+            <span class="tech-tag">Subsumption Architecture</span>
+            <span class="tech-tag">IR Sensors</span>
+            <span class="tech-tag">Pixy2 Camera</span>
+            <span class="tech-tag">Motor Control</span>
+          </div>
+
+          <p class="project-description">
+             The LIDAR Distance Gauge is a fully synthesized FPGA instrument built in SystemVerilog RTL on a Digilent Cmod A7 35T. It 
+              reads real-world distance from a Garmin LIDAR Lite v3 PWM sensor,nprocesses the signal through an 8-module hardware pipeline, 
+              and physically drives an automotive-style x27.168 gauge needle — no processor, no firmware, only synthesized logic. 
+              
+          </p>
+
+          <ul class="project-highlights">
+            <li>Real-time LIDAR distance sensing via PWM pulse-width measurement</li>
+            <li>64-sample moving average filter for stable, jitter-free readings</li>
+            <li>Homing FSM with power-on reset generator for safe startup</li>
+            <li>Parallel 4-digit 7-segment numeric display alongside the analog needle</li>
+          </ul>
+
+          <div class="project-stats">
+            <div class="stat-item">
+              <span class="stat-number">8</span>
+              <span class="stat-label">RTL Modules</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-number">~945</span>
+              <span class="stat-label">Stepper Steps</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-number">12 MHz</span>
+              <span class="stat-label">FPGA Clock</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-number">x64</span>
+              <span class="stat-label">Filter Samples</span>
+            </div>
+          </div>
+
+          <a href="projects/LidarGauge.html" class="project-cta">
+            Explore Project →
+          </a>
+        </div>
+      </article>
+
       <!-- Turtle Duck -->
       <article class="project-card" data-category="mechatronics">
         <div class="project-image">
