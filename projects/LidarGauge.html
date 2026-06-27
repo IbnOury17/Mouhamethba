@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+  <title>LIDAR Distance Gauge | Mouhameth Ba</title>
+  <meta name="description" content="FPGA LIDAR Distance Gauge — Point Cloud edition" />
+  <link rel="stylesheet" href="../assets/css/main.css" />
+  <noscript><link rel="stylesheet" href="../assets/css/noscript.css" /></noscript>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    :root{
+      --cy:#00e8ff;--cy2:rgba(0,232,255,0.14);--pu:#9f8fff;
+      --bg:#03050d;--panel:rgba(255,255,255,0.04);--bdr:rgba(0,232,255,0.18);
+      --txt:#b8d0e8;--dim:#3a5070;--wh:rgba(255,255,255,0.85)
+    }
+    html{scroll-behavior:smooth}
+    body{background:var(--bg);color:var(--txt);overflow-x:hidden;font-family:'Courier New',monospace}
+
+    /* CANVAS — full page point cloud */
+    #cloud-canvas{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0}
+
+    /* scan beam overlay */
+    #scan-beam{
+      position:fixed;top:0;left:-4px;width:3px;height:100%;
+      background:linear-gradient(to bottom,transparent,rgba(0,232,255,.7),transparent);
+      pointer-events:none;z-index:2;
+      animation:beamSweep 8s linear infinite
+    }
+    @keyframes beamSweep{from{left:-4px}to{left:calc(100% + 4px)}}
+
+    #pw{position:relative;z-index:3}
+
+    /* HEADER */
+    #header{
+      position:fixed;top:0;left:0;right:0;height:64px;
+      background:rgba(3,5,13,0.82);border-bottom:1px solid var(--bdr);
+      backdrop-filter:blur(20px);z-index:9999;
+      display:flex;align-items:center;justify-content:space-between;padding:0 2.5rem
+    }
+    #header h1 a{font-size:.8rem;font-weight:700;letter-spacing:.3em;color:var(--cy);text-transform:uppercase;text-decoration:none}
+    #header nav a{
+      color:var(--cy);font-size:.72rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+      padding:.4rem 1rem;border:1px solid rgba(0,232,255,.25);border-radius:30px;text-decoration:none;transition:all .3s
+    }
+    #header nav a:hover{background:var(--cy);color:#000}
+
+    /* HERO */
+    .hero{
+      min-height:100vh;padding-top:64px;
+      display:flex;flex-direction:column;align-items:center;justify-content:center;
+      text-align:center;position:relative;padding-left:2rem;padding-right:2rem
+    }
+    .hero-scan{
+      font-size:.65rem;letter-spacing:.5em;color:var(--cy);text-transform:uppercase;
+      margin-bottom:1.5rem;opacity:0;animation:fadeUp .8s ease .4s forwards
+    }
+    .hero-title{
+      font-size:clamp(3rem,7vw,6rem);font-weight:900;line-height:1;
+      text-transform:uppercase;letter-spacing:.06em;margin-bottom:1.5rem;
+      font-family:sans-serif;
+      opacity:0;animation:fadeUp .8s ease .7s forwards
+    }
+    .hero-title .word-lidar{
+      background:linear-gradient(135deg,var(--cy) 0%,#0096ff 60%,var(--pu) 100%);
+      -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text
+    }
+    .hero-sub{
+      font-size:1rem;color:#7090a8;max-width:560px;line-height:1.8;
+      font-family:sans-serif;margin-bottom:2rem;
+      opacity:0;animation:fadeUp .8s ease 1s forwards
+    }
+    .hero-badges{
+      display:flex;flex-wrap:wrap;gap:.6rem;justify-content:center;margin-bottom:3rem;
+      opacity:0;animation:fadeUp .8s ease 1.2s forwards
+    }
+    .hbadge{
+      padding:.32rem .9rem;border:1px solid rgba(0,232,255,.28);border-radius:20px;
+      font-size:.68rem;color:var(--cy);font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+      background:rgba(0,232,255,.05)
+    }
+
+    /* live scan data strip */
+    .scan-data{
+      display:flex;flex-wrap:wrap;gap:.8rem;justify-content:center;
+      opacity:0;animation:fadeUp .8s ease 1.5s forwards
+    }
+    .sd-item{
+      background:rgba(0,232,255,.05);border:1px solid rgba(0,232,255,.2);
+      border-radius:8px;padding:.45rem .9rem;text-align:center
+    }
+    .sd-val{font-size:.9rem;font-weight:700;color:var(--cy)}
+    .sd-key{font-size:.6rem;color:var(--dim);text-transform:uppercase;letter-spacing:.08em;margin-top:.1rem}
+
+    @keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:none}}
+
+    .scroll-h{
+      position:absolute;bottom:2.5rem;left:50%;transform:translateX(-50%);
+      font-size:.6rem;color:var(--dim);letter-spacing:.25em;text-transform:uppercase;
+      animation:bob 2.2s ease-in-out infinite
+    }
+    @keyframes bob{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(9px)}}
+
+    /* SECTIONS */
+    #main{position:relative;z-index:1}
+
+    .section{
+      max-width:1060px;margin:0 auto;padding:5.5rem 2rem;
+      opacity:0;transform:translateY(32px);
+      transition:opacity .9s ease,transform .9s ease
+    }
+    .section.visible{opacity:1;transform:none}
+
+    .section-alt{
+      max-width:100%;padding:0;
+      background:rgba(0,232,255,.018);
+      border-top:1px solid rgba(0,232,255,.07);border-bottom:1px solid rgba(0,232,255,.07)
+    }
+    .section-alt .inner{max-width:1060px;margin:0 auto;padding:5.5rem 2rem}
+
+    /* section labels */
+    .slabel{
+      display:inline-flex;align-items:center;gap:.6rem;
+      font-size:.6rem;letter-spacing:.4em;color:var(--cy);text-transform:uppercase;margin-bottom:.6rem
+    }
+    .slabel::before{content:'';width:24px;height:1px;background:var(--cy)}
+    .stitle{font-size:2rem;font-weight:800;color:var(--wh);font-family:sans-serif;letter-spacing:.05em;margin-bottom:.5rem;text-transform:uppercase}
+    .sline{width:48px;height:2px;background:linear-gradient(90deg,var(--cy),var(--pu));border-radius:2px;margin-bottom:2.2rem}
+
+    /* cards */
+    .ccard{
+      background:rgba(0,232,255,.03);border:1px solid var(--bdr);
+      border-radius:12px;padding:1.8rem 2.2rem;margin-bottom:1.5rem;position:relative;overflow:hidden
+    }
+    .ccard::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--cy),transparent)}
+    .ccard p{font-size:.94rem;line-height:1.85;color:#7090a8;margin-bottom:.9rem;font-family:sans-serif}
+    .ccard p:last-child{margin-bottom:0}
+    .ccard strong{color:var(--cy)}
+    .ccard em{color:var(--pu)}
+
+    /* metric grid */
+    .mgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:.9rem;margin:1.8rem 0}
+    .mbox{
+      background:rgba(0,232,255,.04);border:1px solid rgba(0,232,255,.18);
+      border-radius:10px;padding:1.1rem;text-align:center;
+      transition:all .3s;cursor:default;position:relative;overflow:hidden
+    }
+    .mbox::after{content:'';position:absolute;inset:0;background:radial-gradient(circle at 50% 0,rgba(0,232,255,.12),transparent 70%);opacity:0;transition:opacity .3s}
+    .mbox:hover::after{opacity:1}
+    .mbox:hover{border-color:var(--cy);transform:translateY(-4px);box-shadow:0 8px 25px rgba(0,232,255,.12)}
+    .mval{font-size:1.6rem;font-weight:800;color:var(--cy);display:block}
+    .mkey{font-size:.6rem;color:var(--dim);text-transform:uppercase;letter-spacing:.1em;margin-top:.25rem}
+
+    /* signal flow */
+    .pipe{display:flex;flex-wrap:wrap;align-items:center;gap:0;margin:1.8rem 0}
+    .pnode{
+      background:rgba(0,232,255,.05);border:1px solid rgba(0,232,255,.25);
+      border-radius:8px;padding:.55rem .9rem;font-size:.68rem;color:var(--cy);
+      font-weight:700;letter-spacing:.05em;text-align:center;line-height:1.4;white-space:nowrap;
+      transition:all .3s
+    }
+    .pnode:hover{background:rgba(0,232,255,.1);box-shadow:0 0 14px rgba(0,232,255,.25)}
+    .pnode.hw{border-color:rgba(0,255,136,.3);color:#00ff88}
+    .pnode.out{border-color:rgba(159,143,255,.3);color:var(--pu)}
+    .parr{color:rgba(0,232,255,.35);font-size:1.1rem;padding:0 3px;flex-shrink:0}
+    @media(max-width:700px){.pipe{flex-direction:column;align-items:flex-start}.parr{transform:rotate(90deg)}}
+
+    /* module cards */
+    .modgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1rem;margin:1.5rem 0}
+    .modcard{
+      background:rgba(255,255,255,.025);border:1px solid rgba(0,232,255,.12);
+      border-radius:10px;padding:1.2rem 1.4rem;
+      transition:all .35s;position:relative;overflow:hidden
+    }
+    .modcard::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:linear-gradient(to bottom,var(--cy),var(--pu));border-radius:3px 0 0 3px;transform:scaleY(0);transform-origin:top;transition:transform .35s}
+    .modcard:hover::before{transform:scaleY(1)}
+    .modcard:hover{border-color:rgba(0,232,255,.4);transform:translateX(6px);background:rgba(0,232,255,.04)}
+    .mn{font-family:'Courier New',monospace;font-size:.78rem;color:var(--cy);margin-bottom:.45rem}
+    .md{font-size:.82rem;color:#5a7a94;line-height:1.6;font-family:sans-serif}
+
+    /* timing table */
+    .tt{width:100%;border-collapse:collapse;margin:1.5rem 0;font-family:'Courier New',monospace}
+    .tt th{
+      background:rgba(0,232,255,.06);color:var(--cy);
+      padding:.65rem 1rem;text-align:left;font-size:.68rem;letter-spacing:.1em;
+      border-bottom:1px solid rgba(0,232,255,.2)
+    }
+    .tt td{padding:.6rem 1rem;border-bottom:1px solid rgba(255,255,255,.04);font-size:.82rem;color:#7090a8}
+    .tt td:last-child{color:var(--cy);font-weight:700}
+    .tt tr:hover td{background:rgba(0,232,255,.025)}
+
+    /* challenge callout */
+    .note{
+      background:rgba(159,143,255,.06);border-left:4px solid var(--pu);
+      border-radius:6px;padding:1.3rem 1.6rem;margin:1.5rem 0
+    }
+    .note strong{color:var(--pu)}
+    .note p{font-size:.88rem;color:#7090a8;line-height:1.75;font-family:sans-serif;margin:0}
+
+    /* media placeholders */
+    .mph{
+      border:2px dashed rgba(0,232,255,.22);border-radius:12px;
+      padding:2.5rem;text-align:center;color:var(--dim);
+      margin:.8rem 0;background:rgba(0,232,255,.015);
+      transition:border-color .3s
+    }
+    .mph:hover{border-color:rgba(0,232,255,.5)}
+    .mph-icon{font-size:2.5rem;margin-bottom:.8rem}
+    .mph-t{font-size:.9rem;color:var(--cy);margin-bottom:.4rem;font-family:sans-serif;font-weight:600}
+    .mph-s{font-size:.75rem;font-family:sans-serif;line-height:1.5}
+    .mgal{display:grid;grid-template-columns:1fr 1fr;gap:.8rem}
+    @media(max-width:560px){.mgal{grid-template-columns:1fr}}
+
+    /* timeline */
+    .tl{margin:1.8rem 0}
+    .tli{display:flex;gap:1.2rem;margin-bottom:1.8rem;position:relative}
+    .tli::before{content:'';position:absolute;left:18px;top:40px;bottom:-1.8rem;width:2px;background:linear-gradient(to bottom,rgba(0,232,255,.2),transparent)}
+    .tli:last-child::before{display:none}
+    .tldot{
+      width:38px;height:38px;border-radius:50%;
+      background:linear-gradient(135deg,var(--cy),var(--pu));
+      display:flex;align-items:center;justify-content:center;
+      font-size:.95rem;flex-shrink:0;box-shadow:0 0 20px rgba(0,232,255,.3)
+    }
+    .tlc{flex:1;background:rgba(255,255,255,.025);border-left:3px solid var(--cy);border-radius:8px;padding:.9rem 1.2rem}
+    .tlp{font-size:.58rem;color:var(--cy);letter-spacing:.18em;text-transform:uppercase;margin-bottom:.25rem}
+    .tlt{font-size:.95rem;color:var(--wh);font-weight:700;margin-bottom:.3rem;font-family:sans-serif}
+    .tlb{font-size:.82rem;color:#5a7a94;line-height:1.6;font-family:sans-serif}
+
+    /* back button */
+    .back{
+      display:inline-flex;align-items:center;gap:.4rem;color:var(--cy);
+      border:1px solid rgba(0,232,255,.28);border-radius:25px;padding:.45rem 1.1rem;
+      font-size:.72rem;font-weight:700;text-decoration:none;letter-spacing:.08em;
+      transition:all .3s;margin-bottom:1.8rem
+    }
+    .back:hover{background:var(--cy);color:#000}
+
+    /* footer */
+    #footer{background:rgba(0,5,15,.9);border-top:1px solid var(--bdr);padding:3rem 2rem 2rem;position:relative;z-index:3}
+    #footer h2{color:var(--cy);font-size:1.3rem;margin-bottom:1.3rem}
+    #footer .contact a{color:var(--cy);text-decoration:none}
+    #footer .copyright{color:var(--dim);font-size:.75rem;margin-top:1.8rem}
+
+    @media(max-width:680px){.stitle{font-size:1.5rem}}
+  </style>
+</head>
+<body class="is-preload">
+
+<!-- Point cloud canvas -->
+<canvas id="cloud-canvas"></canvas>
+<!-- Scan beam -->
+<div id="scan-beam"></div>
+
+<div id="pw">
+
+  <!-- Header -->
+  <header id="header">
+    <h1><a href="../projects.html">← PROJECTS</a></h1>
+    <nav><a href="#menu">MENU</a></nav>
+  </header>
+
+  <!-- Menu -->
+  <nav id="menu">
+    <div class="inner">
+      <h2>Menu</h2>
+      <ul class="links">
+        <li><a href="../index.html">Home</a></li>
+        <li><a href="../bio.html">Bio</a></li>
+        <li><a href="../projects.html">Projects</a></li>
+        <li><a href="../experience.html">Experience</a></li>
+        <li><a href="../contact.html">Contact</a></li>
+      </ul>
+      <a href="#" class="close">Close</a>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-scan">◈ &nbsp; SCANNING ENVIRONMENT &nbsp; ◈</div>
+
+    <h1 class="hero-title">
+      <span class="word-lidar">LIDAR</span><br>
+      Distance Gauge
+    </h1>
+
+    <p class="hero-sub">
+      A fully synthesized FPGA instrument — no processor, no firmware.
+      The Garmin LIDAR Lite v3 sends a PWM pulse; 8 RTL modules later,
+      a gauge needle moves to the exact position.
+    </p>
+
+    <div class="hero-badges">
+      <span class="hbadge">SystemVerilog RTL</span>
+      <span class="hbadge">Cmod A7 35T</span>
+      <span class="hbadge">Garmin LIDAR Lite v3</span>
+      <span class="hbadge">TB6612FNG H-Bridge</span>
+      <span class="hbadge">x27.168 Stepper</span>
+      <span class="hbadge">Xilinx Vivado</span>
+    </div>
+
+    <div class="scan-data">
+      <div class="sd-item"><div class="sd-val" id="live-dist">847</div><div class="sd-key">cm measured</div></div>
+      <div class="sd-item"><div class="sd-val">12 MHz</div><div class="sd-key">FPGA clock</div></div>
+      <div class="sd-item"><div class="sd-val">945</div><div class="sd-key">total steps</div></div>
+      <div class="sd-item"><div class="sd-val" id="live-pts">0</div><div class="sd-key">scan points</div></div>
+      <div class="sd-item"><div class="sd-val" id="live-status">HOMING</div><div class="sd-key">FSM state</div></div>
+    </div>
+
+    <div class="scroll-h">↓ &nbsp; SCAN TO EXPLORE &nbsp; ↓</div>
+  </section>
+
+  <!-- MAIN -->
+  <div id="main">
+
+    <!-- Overview -->
+    <section class="section">
+      <a href="../projects.html" class="back">← ALL PROJECTS</a>
+      <div class="slabel">SCAN REGION 01</div>
+      <h2 class="stitle">Mission Brief</h2>
+      <div class="sline"></div>
+
+      <div class="mgrid">
+        <div class="mbox"><span class="mval">8</span><span class="mkey">RTL Modules</span></div>
+        <div class="mbox"><span class="mval">945</span><span class="mkey">Stepper Steps</span></div>
+        <div class="mbox"><span class="mval">12 MHz</span><span class="mkey">FPGA Clock</span></div>
+        <div class="mbox"><span class="mval">120</span><span class="mkey">Clocks / cm</span></div>
+        <div class="mbox"><span class="mval">64×</span><span class="mkey">Filter Samples</span></div>
+        <div class="mbox"><span class="mval">240</span><span class="mkey">Steps / sec</span></div>
+      </div>
+
+      <div class="ccard">
+        <p>The <strong>LIDAR Distance Gauge</strong> is a fully synthesized FPGA instrument built in SystemVerilog RTL on a Digilent Cmod A7 35T. It reads real-world distance from a Garmin LIDAR Lite v3 PWM sensor, processes the signal through an 8-module hardware pipeline, and physically drives an automotive-style x27.168 gauge needle — <em>no processor, no firmware, only synthesized logic</em>.</p>
+        <p>The project evolved through three milestones: proving motor control on a Basys3, migrating to the Cmod A7 with live LIDAR input, and combining both into a fully calibrated real-time instrument. The Cmod A7's 12 MHz clock required recalculating every timing constant that the 100 MHz Basys3 had established.</p>
+        <p><strong>Team:</strong> Mouhameth Ba · George Alabi · Denver Hoj &nbsp;&nbsp;|&nbsp;&nbsp; <strong>Course:</strong> ECE Digital Systems Design / FPGA Lab &nbsp;&nbsp;|&nbsp;&nbsp; <strong>Submitted:</strong> April 30, 2026</p>
+      </div>
+    </section>
+
+    <!-- Signal Flow (alt) -->
+    <div class="section-alt">
+      <div class="inner section">
+        <div class="slabel">SCAN REGION 02</div>
+        <h2 class="stitle">Signal Pipeline</h2>
+        <div class="sline"></div>
+
+        <div class="pipe">
+          <div class="pnode hw">GARMIN LIDAR<br><small>PWM out</small></div><div class="parr">→</div>
+          <div class="pnode">pwm_synchronizer<br><small>metastability</small></div><div class="parr">→</div>
+          <div class="pnode">pwm_pulse_measurer<br><small>pulse → cm</small></div><div class="parr">→</div>
+          <div class="pnode">distance_filter<br><small>64-sample avg</small></div><div class="parr">→</div>
+          <div class="pnode">dist_to_step_mapper<br><small>cm → step</small></div><div class="parr">→</div>
+          <div class="pnode">top FSM + deadband<br><small>homing / run</small></div><div class="parr">→</div>
+          <div class="pnode">stepper_driver<br><small>position ctrl</small></div><div class="parr">→</div>
+          <div class="pnode">tb6612_phase_driver<br><small>coil signals</small></div><div class="parr">→</div>
+          <div class="pnode out">x27.168 Motor<br><small>needle position</small></div>
+        </div>
+
+        <div class="ccard" style="margin-top:1.5rem">
+          <p>Every stage is a distinct synthesizable module. The LIDAR's asynchronous PWM is safely crossed into the 12 MHz clock domain by a two-flop synchronizer. A 64-sample moving average removes jitter. A ±2-step deadband in the FSM suppresses noise without masking real movement.</p>
+          <p>The filtered distance also drives <strong>bin_to_bcd → seg7_mux_driver</strong> in parallel — the 4-digit 7-segment display shows the numeric distance while the needle tracks position simultaneously.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modules -->
+    <section class="section">
+      <div class="slabel">SCAN REGION 03</div>
+      <h2 class="stitle">RTL Modules</h2>
+      <div class="sline"></div>
+
+      <div class="modgrid">
+        <div class="modcard"><div class="mn">pwm_synchronizer</div><div class="md">Two flip-flop synchronizer. Safely crosses the LIDAR's async PWM into the 12 MHz domain. Prevents metastability from corrupting downstream counters.</div></div>
+        <div class="modcard"><div class="mn">pwm_pulse_measurer</div><div class="md">Counts clocks while PWM is HIGH. Converts pulse width to centimeters: 10 µs/cm × 12 clocks/µs = 120 clocks per centimeter.</div></div>
+        <div class="modcard"><div class="mn">distance_filter</div><div class="md">64-sample moving average. Accumulates readings in a shift register and outputs the running mean, smoothing reflectivity and angle-induced jitter.</div></div>
+        <div class="modcard"><div class="mn">distance_to_step_mapper</div><div class="md">Linear interpolation maps 5–1000 cm to 0–944 steps. Below minimum clamps to step 0; above maximum clamps to full scale (944).</div></div>
+        <div class="modcard"><div class="mn">stepper_driver</div><div class="md">Absolute-position controller. Fires 240 step ticks/sec, advancing one step per tick toward target while tracking the 6-phase half-step sequence.</div></div>
+        <div class="modcard"><div class="mn">tb6612_phase_driver</div><div class="md">Translates 3-bit phase index (0–5) into AIN1, AIN2, BIN1, BIN2 — the four TB6612FNG H-bridge coil signals for the x27.168 motor.</div></div>
+        <div class="modcard"><div class="mn">bin_to_bcd</div><div class="md">Double-dabble algorithm converts the binary distance value to 4 packed BCD digits, updated every measurement cycle for the 7-segment display.</div></div>
+        <div class="modcard"><div class="mn">seg7_mux_driver</div><div class="md">Multiplexed 4-digit 7-segment driver. Cycles digit selects fast enough (>60 Hz per digit) to appear continuously illuminated to the eye.</div></div>
+      </div>
+    </section>
+
+    <!-- Timing (alt) -->
+    <div class="section-alt">
+      <div class="inner section">
+        <div class="slabel">SCAN REGION 04</div>
+        <h2 class="stitle">Timing Calculations</h2>
+        <div class="sline"></div>
+
+        <div class="note">
+          <p><strong>Critical Migration:</strong> The Basys3 runs at 100 MHz; the Cmod A7 at 12 MHz. Every module that counts clock cycles encodes a frequency assumption. Missing a single recalculation produces a gauge that moves the wrong amount for any distance — physically plausible but numerically wrong, the hardest category of hardware bug.</p>
+        </div>
+
+        <table class="tt">
+          <thead><tr><th>QUANTITY</th><th>CALCULATION</th><th>RESULT</th></tr></thead>
+          <tbody>
+            <tr><td>Clock frequency</td><td>Cmod A7 system clock</td><td>12 MHz</td></tr>
+            <tr><td>Clock period</td><td>1 / 12 MHz</td><td>83.33 ns</td></tr>
+            <tr><td>Clocks per µs</td><td>12 MHz × 1 µs</td><td>12 clocks</td></tr>
+            <tr><td>LIDAR scale factor</td><td>10 µs/cm × 12 clocks/µs</td><td>120 clocks/cm</td></tr>
+            <tr><td>50 cm pulse count</td><td>50 × 120</td><td>6 000 clocks</td></tr>
+            <tr><td>100 cm pulse count</td><td>100 × 120</td><td>12 000 clocks</td></tr>
+            <tr><td>Step tick divider</td><td>12 MHz / 240 sps</td><td>50 000 clocks/step</td></tr>
+            <tr><td>POR hold time</td><td>8 cycles × 83.33 ns</td><td>~667 ns</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Media -->
+    <section class="section">
+      <div class="slabel">SCAN REGION 05</div>
+      <h2 class="stitle">Hardware Gallery</h2>
+      <div class="sline"></div>
+
+      <div class="ccard">
+        <p>Photos and demo video of the physical build will live here — Cmod A7, LIDAR sensor, TB6612FNG driver, gauge assembly, and wiring. <strong>Replace the placeholders below with your actual files when ready.</strong></p>
+      </div>
+
+      <!-- VIDEO — replace with: <video src="../videos/lidar_demo.mp4" controls autoplay muted loop style="width:100%;border-radius:12px"></video> -->
+      <div class="mph">
+        <div class="mph-icon">🎬</div>
+        <div class="mph-t">DEMO VIDEO</div>
+        <div class="mph-s">Replace with &lt;video&gt; tag pointing to your recording<br>Recommended: MP4, autoplay muted loop, border-radius:12px, width:100%</div>
+      </div>
+
+      <!-- PHOTOS — replace each .mph div with an <img> tag -->
+      <div class="mgal">
+        <div class="mph"><div class="mph-icon">📷</div><div class="mph-t">PHOTO 1</div><div class="mph-s">Full system wiring / breadboard assembly</div></div>
+        <div class="mph"><div class="mph-icon">📷</div><div class="mph-t">PHOTO 2</div><div class="mph-s">Cmod A7 + TB6612FNG + gauge motor</div></div>
+        <div class="mph"><div class="mph-icon">📷</div><div class="mph-t">PHOTO 3</div><div class="mph-s">Garmin LIDAR Lite v3 sensor close-up</div></div>
+        <div class="mph"><div class="mph-icon">📷</div><div class="mph-t">PHOTO 4</div><div class="mph-s">Gauge needle at multiple distance positions</div></div>
+      </div>
+    </section>
+
+    <!-- Timeline (alt) -->
+    <div class="section-alt">
+      <div class="inner section">
+        <div class="slabel">SCAN REGION 06</div>
+        <h2 class="stitle">Project Log</h2>
+        <div class="sline"></div>
+
+        <div class="tl">
+          <div class="tli">
+            <div class="tldot">🔬</div>
+            <div class="tlc">
+              <div class="tlp">MILESTONE 1</div>
+              <div class="tlt">Motor Proof-of-Concept — Basys3</div>
+              <div class="tlb">Proved stepper motor and x27 gauge movement using Basys3 switch inputs at 100 MHz. Validated the TB6612FNG driver, 6-phase half-step sequence, and homing behavior. Confirmed 945 steps covers the full gauge arc cleanly.</div>
+            </div>
+          </div>
+          <div class="tli">
+            <div class="tldot">📡</div>
+            <div class="tlc">
+              <div class="tlp">MILESTONE 2</div>
+              <div class="tlt">LIDAR Integration — Cmod A7 Migration</div>
+              <div class="tlb">Migrated to Cmod A7 (12 MHz). Integrated the full LIDAR path: PWM synchronizer, pulse measurer, and 64-sample moving average filter. Recalculated all timing constants — 120 clocks/cm at 12 MHz vs 1 000 clocks/cm at 100 MHz.</div>
+            </div>
+          </div>
+          <div class="tli">
+            <div class="tldot">⚡</div>
+            <div class="tlc">
+              <div class="tlp">KEY ENGINEERING LESSON</div>
+              <div class="tlt">Every Clocked Module Encodes a Frequency Assumption</div>
+              <div class="tlb">The deadliest FPGA bugs are physically plausible but numerically wrong results. Naming timing constants as parameters (CLK_FREQ, STEP_RATE) instead of magic numbers made the design portable across boards and safe to recalculate. The deadband further protected the system from jitter without masking real motion.</div>
+            </div>
+          </div>
+          <div class="tli">
+            <div class="tldot">🏁</div>
+            <div class="tlc">
+              <div class="tlp">FINAL SUBMISSION — APRIL 30, 2026</div>
+              <div class="tlt">All 10 Demonstration Requirements Met</div>
+              <div class="tlb">Complete pipeline verified: POR + homing, Cmod A7 bring-up, real LIDAR PWM, pulse timing, homing sequence, real-time tracking at 50 / 100 / 150 cm, moving average smoothness, close-range clamping, and full system explanation. Black-box FPGA test passed.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- #main -->
+
+  <!-- Footer -->
+  <section id="footer">
+    <div class="inner">
+      <h2 class="major">Get in touch</h2>
+      <ul class="contact">
+        <li class="icon solid fa-envelope"><a href="mailto:ibnoury17@gmail.com">ibnoury17@gmail.com</a></li>
+        <li class="icon brands fa-linkedin"><a href="https://www.linkedin.com/in/mouhameth-ba-588b82207/" target="_blank">LinkedIn</a></li>
+      </ul>
+      <ul class="copyright">
+        <li>&copy; Mouhameth Ba. All rights reserved.</li>
+        <li>Dina metti, waaye dinagnu am ndam</li>
+      </ul>
+    </div>
+  </section>
+
+</div><!-- #pw -->
+
+<script src="../assets/js/jquery.min.js"></script>
+<script src="../assets/js/jquery.scrollex.min.js"></script>
+<script src="../assets/js/browser.min.js"></script>
+<script src="../assets/js/breakpoints.min.js"></script>
+<script src="../assets/js/util.js"></script>
+<script src="../assets/js/main.js"></script>
+
+<script>
+/* ===== 3D POINT CLOUD ===== */
+(function(){
+  const c=document.getElementById('cloud-canvas'),ctx=c.getContext('2d');
+  let pts=[],W,H,angle=0;
+  const N=1400,FOV=350,DIST=600;
+
+  function resize(){W=c.width=window.innerWidth;H=c.height=window.innerHeight}
+
+  function init(){
+    resize();pts=[];
+    for(let i=0;i<N;i++){
+      // Distribute in a rough 3D cluster representing a scanned room
+      const theta=Math.random()*Math.PI*2;
+      const phi=Math.acos(2*Math.random()-1);
+      const r=80+Math.random()*260;
+      pts.push({
+        x:r*Math.sin(phi)*Math.cos(theta),
+        y:(Math.random()-.5)*280,
+        z:r*Math.sin(phi)*Math.sin(theta),
+        hue:Math.random()<.7?180+Math.random()*40:260+Math.random()*30, // cyan or purple
+        size:Math.random()*.9+.3,
+        bright:Math.random()*.5+.2
+      });
+    }
+  }
+
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    angle+=.0008;
+
+    // Sort by z for depth (painter's algorithm)
+    const cos=Math.cos(angle),sin=Math.sin(angle);
+    const projected=pts.map(p=>{
+      const rx=p.x*cos-p.z*sin;
+      const rz=p.x*sin+p.z*cos;
+      const scale=FOV/(FOV+rz+DIST);
+      const sx=W/2+rx*scale;
+      const sy=H/2+p.y*scale;
+      const sr=p.size*scale*1.8;
+      const depth=scale; // closer = larger scale
+      return{sx,sy,sr,hue:p.hue,bright:p.bright*depth*2.5};
+    }).sort((a,b)=>a.sr-b.sr);
+
+    projected.forEach(p=>{
+      if(p.sr<.1)return;
+      const alpha=Math.min(p.bright,0.75);
+      ctx.beginPath();
+      ctx.arc(p.sx,p.sy,Math.max(p.sr,.4),0,Math.PI*2);
+      ctx.fillStyle=`hsla(${p.hue},90%,70%,${alpha})`;
+      ctx.fill();
+
+      // Glow for close/bright points
+      if(p.bright>0.35&&p.sr>0.8){
+        ctx.beginPath();
+        ctx.arc(p.sx,p.sy,p.sr*3,0,Math.PI*2);
+        ctx.fillStyle=`hsla(${p.hue},90%,70%,${alpha*.12})`;
+        ctx.fill();
+      }
+    });
+
+    requestAnimationFrame(draw);
+  }
+
+  init();draw();
+  window.addEventListener('resize',()=>{resize();init()});
+
+  // Update live point count
+  let scanPts=0;
+  const ptEl=document.getElementById('live-pts');
+  function countUp(){
+    scanPts=Math.min(scanPts+Math.floor(Math.random()*28+8),N);
+    if(ptEl)ptEl.textContent=scanPts.toLocaleString();
+    if(scanPts<N)setTimeout(countUp,40);
+  }
+  setTimeout(countUp,800);
+})();
+
+/* ===== HERO LIVE DATA ===== */
+(function(){
+  const fsm=document.getElementById('live-status');
+  if(fsm){setTimeout(()=>{fsm.textContent='ST_RUNNING'},2000)}
+  const dist=document.getElementById('live-dist');
+  if(dist){
+    let v=0;
+    function up(ts){
+      if(!up.t0)up.t0=ts;
+      const p=Math.min((ts-up.t0)/2500,1);
+      v=Math.round((1-Math.pow(1-p,3))*847);
+      dist.textContent=v;
+      if(p<1)requestAnimationFrame(up);
+    }
+    setTimeout(()=>requestAnimationFrame(up),600);
+  }
+})();
+
+/* ===== SCROLL REVEAL ===== */
+const obs=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{if(e.isIntersecting)e.target.classList.add('visible')});
+},{threshold:.07});
+document.querySelectorAll('.section').forEach(el=>obs.observe(el));
+
+/* ===== HEADER SCROLL ===== */
+window.addEventListener('scroll',()=>{
+  document.getElementById('header').classList.toggle('scrolled',scrollY>60);
+});
+</script>
+</body>
+</html>
