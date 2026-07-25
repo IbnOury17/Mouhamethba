@@ -4,28 +4,31 @@
   <meta charset="utf-8" />
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
-  
+
   <title>Ashton The Turtleduck | Mouhameth Ba</title>
-<meta name="description" content="From Senegal to industrial robotics in the US. My journey in mechatronics engineering, automation systems, and hands-on problem solving.">
-  
-		
+  <meta name="description" content="From Senegal to industrial robotics in the US. My journey in mechatronics engineering, automation systems, and hands-on problem solving.">
+
   <meta name="keywords" content="robotics engineer, mechatronics, automation, portfolio, Arduino, PLC, industrial robotics, autonomous systems, computer vision, embedded systems, AFROBOT, Mouhameth Ba, Senegal engineer">
   <meta name="author" content="Mouhameth Ba">
   <meta name="robots" content="index, follow">
-  
+
   <meta property="og:title" content="Mouhameth Ba - Robotics Engineer Portfolio">
   <meta property="og:description" content="Engineering portfolio showcasing autonomous robotics projects, subsumption architecture, and real-world industrial automation experience.">
-  <meta property="og:image" content="https://mouhamethba/images/gradmouhametba.jpg">
-  <meta property="og:url" content="https://mouhamethba">
+  <meta property="og:image" content="https://mouhamethba.com/images/gradmouhametba.jpg">
+  <meta property="og:url" content="https://mouhamethba.com">
   <meta property="og:type" content="website">
-  
+
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Mouhameth Ba - Robotics Engineer">
   <meta name="twitter:description" content="Autonomous robotics projects and engineering portfolio">
-  <meta name="twitter:image" content="https://mouhamethba/images/gradmouhametba.jpg">
-  
-  <link rel="stylesheet" href="assets/css/main.css" />
-  <noscript><link rel="stylesheet" href="assets/css/noscript.css" /></noscript>
+  <meta name="twitter:image" content="https://mouhamethba.com/images/gradmouhametba.jpg">
+
+  <link rel="stylesheet" href="../assets/css/main.css" />
+  <noscript><link rel="stylesheet" href="../assets/css/noscript.css" /></noscript>
+
+  <!-- FIX 1: Custom menu system + turtleduck ocean-blue accent -->
+  <link rel="stylesheet" href="/assets/css/custom-menu.css" />
+  <style>:root { --cm-accent: #0096ff; --cm-accent2: #00c8ff; }</style>
 
   <style>
     * {
@@ -39,7 +42,7 @@
       overflow-x: hidden;
     }
 
-    /* ========== UPDATED HEADER (Apply to all pages) ========== */
+    /* ========== HEADER ========== */
     #header {
       position: fixed;
       top: 0;
@@ -49,6 +52,7 @@
       background: linear-gradient(135deg, rgba(0, 150, 255, 0.1) 0%, rgba(0, 200, 255, 0.05) 100%);
       backdrop-filter: blur(20px);
       border-bottom: 2px solid rgba(0, 150, 255, 0.3);
+      /* FIX 2: raised to sit above the page wrapper but below our menu panel (z 20001) */
       z-index: 9999;
       display: flex;
       align-items: center;
@@ -84,6 +88,8 @@
       filter: drop-shadow(0 0 20px rgba(0, 150, 255, 0.8));
     }
 
+    /* FIX 3: scope nav styles to <a> only — leaves the cm-trigger <button> unstyled
+       so the custom-menu.css can own it cleanly */
     #header nav a {
       color: #0096ff;
       font-weight: 700;
@@ -152,12 +158,8 @@
         opacity: 0;
         transform: translateX(0) scale(0.5);
       }
-      10% {
-        opacity: 1;
-      }
-      90% {
-        opacity: 1;
-      }
+      10% { opacity: 1; }
+      90% { opacity: 1; }
       100% {
         bottom: 110%;
         opacity: 0;
@@ -238,14 +240,8 @@
     }
 
     @keyframes fadeInUp {
-      from {
-        opacity: 0;
-        transform: translateY(30px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
+      from { opacity: 0; transform: translateY(30px); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
     .hero-description {
@@ -341,6 +337,7 @@
       height: 200%;
       background: radial-gradient(circle, rgba(0, 150, 255, 0.1) 0%, transparent 70%);
       animation: rotate 30s linear infinite;
+      pointer-events: none;
     }
 
     @keyframes rotate {
@@ -363,9 +360,8 @@
       z-index: 1;
     }
 
-    .content-card strong {
-      color: #00c8ff;
-    }
+    .content-card p:last-child { margin-bottom: 0; }
+    .content-card strong { color: #00c8ff; }
 
     /* ========== FEATURE BLOCKS ========== */
     .feature-grid {
@@ -394,12 +390,10 @@
       height: 100%;
       background: linear-gradient(90deg, transparent, rgba(0, 150, 255, 0.2), transparent);
       transition: left 0.6s ease;
+      pointer-events: none;
     }
 
-    .feature-block:hover::before {
-      left: 100%;
-    }
-
+    .feature-block:hover::before { left: 100%; }
     .feature-block:hover {
       transform: translateY(-15px) scale(1.02);
       border-color: #0096ff;
@@ -482,6 +476,9 @@
       border-left: 5px solid #ff9600;
       position: relative;
       transition: all 0.3s ease;
+      color: #ccc;
+      font-size: 1.1rem;
+      line-height: 1.7;
     }
 
     .challenge-item::before {
@@ -517,7 +514,7 @@
       box-shadow: 0 10px 30px rgba(0, 150, 255, 0.3);
     }
 
-    /* ========== UPDATED FOOTER (Apply to all pages) ========== */
+    /* ========== FOOTER ========== */
     #footer {
       background: linear-gradient(135deg, rgba(0, 150, 255, 0.1) 0%, rgba(0, 200, 255, 0.05) 100%);
       border-top: 2px solid rgba(0, 150, 255, 0.3);
@@ -546,9 +543,7 @@
       margin: 2rem 0;
     }
 
-    #footer .contact li {
-      padding: 1rem 0;
-    }
+    #footer .contact li { padding: 1rem 0; }
 
     #footer .contact a {
       color: #00c8ff;
@@ -578,15 +573,11 @@
 
     /* ========== RESPONSIVE ========== */
     @media (max-width: 768px) {
-      #header {
-        padding: 0 1.5rem;
-      }
+      #header { padding: 0 1.5rem; }
       .hero-title { font-size: 3rem; }
       .hero-emoji { font-size: 4rem; }
       .section-title { font-size: 2.5rem; }
-      .feature-grid {
-        grid-template-columns: 1fr;
-      }
+      .feature-grid { grid-template-columns: 1fr; }
       .project-section { padding: 4rem 1.5rem; }
     }
   </style>
@@ -602,26 +593,29 @@
 
   <div id="page-wrapper">
 
-    <!-- Header -->
-    <header id="header">
-      <h1><a href="../projects.html">Projects</a></h1>
-      <nav><a href="#menu">Menu</a></nav>
-    </header>
-
-    <!-- Menu -->
-    <nav id="menu">
-      <div class="inner">
-        <h2>Menu</h2>
-        <ul class="links">
-          <li><a href="../index.html">Home</a></li>
-          <li><a href="../bio.html">Bio</a></li>
-          <li><a href="../projects.html">Projects</a></li>
-          <li><a href="../experience.html">Experience</a></li>
-          <li><a href="../contact.html">Contact</a></li>
-        </ul>
-        <a href="#" class="close">Close</a>
-      </div>
+     <!-- Header -->
+  <header id="header">
+    <h1><a href="../projects.html">PROJECTS</a></h1>
+    <nav>
+      <a href="#menu">Menu</a>
     </nav>
+  </header>
+
+  <!-- Menu -->
+  <nav id="menu">
+    <div class="inner">
+      <h2>Menu</h2>
+      <ul class="links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="bio.html">Bio</a></li>
+        <li><a href="projects.html">Projects</a></li>
+        <li><a href="experience.html">Experience</a></li>
+        <li><a href="contact.html">Contact</a></li>
+      </ul>
+      <a href="#" class="close">Close</a>
+    </div>
+  </nav>
+
 
     <!-- Hero Section -->
     <section class="hero-section">
@@ -631,7 +625,7 @@
         <h1 class="hero-title">Turtleduck</h1>
         <p class="hero-subtitle">Ashton's Journey</p>
         <p class="hero-description">
-          An electromechanical adventure exploring conductivity, buoyancy, 
+          An electromechanical adventure exploring conductivity, buoyancy,
           and the beautiful chaos of real-world engineering
         </p>
       </div>
@@ -650,14 +644,14 @@
 
         <div class="content-card">
           <p>
-            Ashton the Turtleduck is a hands-on electromechanical project built to explore what really happens 
-            when electrical theory leaves the classroom and meets the real world. The goal was simple on paper: 
-            <strong>use ionized water to complete an electrical circuit and power a motor</strong>. 
+            Ashton the Turtleduck is a hands-on electromechanical project built to explore what really happens
+            when electrical theory leaves the classroom and meets the real world. The goal was simple on paper:
+            <strong>use ionized water to complete an electrical circuit and power a motor</strong>.
             In practice, it quickly became an exercise in mechanical design, electrical trade-offs, and experimental uncertainty.
           </p>
           <p>
-            This project combines conductivity, buoyancy, waterproofing, and energy conversion into a single system 
-            that had to <strong>physically work</strong>—not just look correct in calculations.
+            This project combines conductivity, buoyancy, waterproofing, and energy conversion into a single system
+            that had to <strong>physically work</strong> — not just look correct in calculations.
           </p>
         </div>
       </section>
@@ -675,7 +669,7 @@
             <span class="feature-icon">💡</span>
             <h3 class="feature-title">Core Objective</h3>
             <p class="feature-description">
-              Design and build a floating electromechanical device that activates when placed in ionized water, 
+              Design and build a floating electromechanical device that activates when placed in ionized water,
               demonstrating resistance, current flow, buoyancy, and energy conversion.
             </p>
           </div>
@@ -684,7 +678,7 @@
             <span class="feature-icon">📊</span>
             <h3 class="feature-title">Performance Analysis</h3>
             <p class="feature-description">
-              Measure electrical and mechanical performance, identify energy losses, 
+              Measure electrical and mechanical performance, identify energy losses,
               and understand why real systems rarely behave like ideal models.
             </p>
           </div>
@@ -693,7 +687,7 @@
             <span class="feature-icon">🔧</span>
             <h3 class="feature-title">Engineering Reality</h3>
             <p class="feature-description">
-              Beyond making the system function, learn how interdisciplinary challenges 
+              Beyond making the system function, learn how interdisciplinary challenges
               interact in ways that textbooks don't prepare you for.
             </p>
           </div>
@@ -710,13 +704,13 @@
 
         <div class="content-card">
           <p>
-            The Turtleduck body was <strong>fully 3D printed and sealed</strong> to protect internal electronics from water exposure. 
-            Special care was taken with buoyancy and weight distribution to ensure the device floated level 
+            The Turtleduck body was <strong>fully 3D printed and sealed</strong> to protect internal electronics from water exposure.
+            Special care was taken with buoyancy and weight distribution to ensure the device floated level
             while still allowing the motor shaft to interact with the external load.
           </p>
           <p>
-            Early testing revealed <strong>severe corrosion issues</strong> when using copper electrodes, 
-            leading to unreliable electrical behavior. To solve this, the electrodes were redesigned using aluminum, 
+            Early testing revealed <strong>severe corrosion issues</strong> when using copper electrodes,
+            leading to unreliable electrical behavior. To solve this, the electrodes were redesigned using aluminum,
             which significantly reduced oxidation and improved consistency during testing.
           </p>
         </div>
@@ -736,12 +730,12 @@
 
         <div class="content-card">
           <p>
-            When salt is added to water, the resistance of the water decreases, allowing current to flow between the electrodes 
+            When salt is added to water, the resistance of the water decreases, allowing current to flow between the electrodes
             and complete the circuit. Using <strong>Ohm's Law (V = IR)</strong>, this increase in current enables the motor to activate.
           </p>
           <p>
-            In this system, the water itself acts as a <strong>variable conductive path</strong> rather than an insulator. 
-            Small changes in salt concentration had noticeable effects on current flow and motor behavior, 
+            In this system, the water itself acts as a <strong>variable conductive path</strong> rather than an insulator.
+            Small changes in salt concentration had noticeable effects on current flow and motor behavior,
             reinforcing the sensitivity of real electrical systems to environmental conditions.
           </p>
         </div>
@@ -761,12 +755,12 @@
 
         <div class="content-card">
           <p>
-            To evaluate system performance, efficiency testing was conducted using a <strong>hanging mass experiment</strong>. 
+            To evaluate system performance, efficiency testing was conducted using a <strong>hanging mass experiment</strong>.
             Electrical energy from the circuit was converted into mechanical motion, lifting a known mass over a measured distance.
           </p>
           <p>
-            By recording voltage, current, lifted mass, and time, the system's electrical input power and mechanical output power were estimated. 
-            While the overall efficiency was low, the results clearly demonstrated where energy was being lost—primarily through 
+            By recording voltage, current, lifted mass, and time, the system's electrical input power and mechanical output power were estimated.
+            While the overall efficiency was low, the results clearly demonstrated where energy was being lost — primarily through
             <strong>friction, water resistance, and sealing constraints</strong>.
           </p>
         </div>
@@ -827,21 +821,11 @@
         </div>
 
         <ul class="challenge-list">
-          <li class="challenge-item">
-            Achieving reliable waterproofing significantly increased mechanical complexity
-          </li>
-          <li class="challenge-item">
-            Friction and sealing methods reduced mechanical efficiency
-          </li>
-          <li class="challenge-item">
-            Electrical measurements varied due to changing water conductivity
-          </li>
-          <li class="challenge-item">
-            Repeating experiments consistently proved difficult
-          </li>
-          <li class="challenge-item">
-            A simple-looking system revealed strong interdisciplinary dependencies
-          </li>
+          <li class="challenge-item">Achieving reliable waterproofing significantly increased mechanical complexity</li>
+          <li class="challenge-item">Friction and sealing methods reduced mechanical efficiency</li>
+          <li class="challenge-item">Electrical measurements varied due to changing water conductivity</li>
+          <li class="challenge-item">Repeating experiments consistently proved difficult</li>
+          <li class="challenge-item">A simple-looking system revealed strong interdisciplinary dependencies</li>
         </ul>
       </section>
 
@@ -858,8 +842,8 @@
             <span class="feature-icon">🎓</span>
             <h3 class="feature-title">Interdisciplinary Reality</h3>
             <p class="feature-description">
-              Engineering problems rarely belong to a single discipline. 
-              Electrical theory, mechanical constraints, materials science, and experimental uncertainty 
+              Engineering problems rarely belong to a single discipline.
+              Electrical theory, mechanical constraints, materials science, and experimental uncertainty
               all interacted in ways that could not be ignored.
             </p>
           </div>
@@ -868,7 +852,7 @@
             <span class="feature-icon">🔨</span>
             <h3 class="feature-title">Troubleshooting > Theory</h3>
             <p class="feature-description">
-              Real systems expose weaknesses in assumptions, and troubleshooting often matters 
+              Real systems expose weaknesses in assumptions, and troubleshooting often matters
               more than initial calculations. Iteration and adaptation are core engineering skills.
             </p>
           </div>
@@ -877,7 +861,7 @@
             <span class="feature-icon">💡</span>
             <h3 class="feature-title">Simplicity is Hard</h3>
             <p class="feature-description">
-              What looks simple on paper can be remarkably complex in execution. 
+              What looks simple on paper can be remarkably complex in execution.
               The best solutions come from understanding failures and building resilience into the design.
             </p>
           </div>
@@ -894,11 +878,11 @@
 
         <div class="content-card">
           <p>
-            Future iterations of the Turtleduck would include a <strong>modular battery system</strong>, 
+            Future iterations of the Turtleduck would include a <strong>modular battery system</strong>,
             improved sealing techniques, and more precise experimental measurement methods.
           </p>
           <p>
-            Refining the mechanical transmission and reducing friction would also improve efficiency and repeatability. 
+            Refining the mechanical transmission and reducing friction would also improve efficiency and repeatability.
             Additionally, exploring alternative electrode materials and coatings could further enhance conductivity stability.
           </p>
         </div>
@@ -917,7 +901,7 @@
         </div>
       </section>
 
-    </div>
+    </div><!-- #main-content -->
 
     <!-- Footer -->
     <section id="footer">
@@ -938,7 +922,7 @@
       </div>
     </section>
 
-  </div>
+  </div><!-- #page-wrapper -->
 
   <!-- Scripts -->
   <script src="../assets/js/jquery.min.js"></script>
@@ -947,6 +931,8 @@
   <script src="../assets/js/breakpoints.min.js"></script>
   <script src="../assets/js/util.js"></script>
   <script src="../assets/js/main.js"></script>
+  <!-- FIX 5: custom menu JS injected after main.js -->
+  <script src="/assets/js/custom-menu.js"></script>
 
   <script>
     // Create floating bubbles
@@ -965,12 +951,10 @@
       }
     }
 
-    // Intersection Observer for scroll animations
+    // Scroll reveal
     const observer = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add('visible');
-        }
+        if (entry.isIntersecting) entry.target.classList.add('visible');
       });
     }, { threshold: 0.1 });
 
@@ -978,20 +962,12 @@
       observer.observe(section);
     });
 
-    // Header scroll effect
+    // Header shrink on scroll
     window.addEventListener('scroll', () => {
-      const header = document.getElementById('header');
-      if (window.scrollY > 100) {
-        header.classList.add('scrolled');
-      } else {
-        header.classList.remove('scrolled');
-      }
+      document.getElementById('header').classList.toggle('scrolled', window.scrollY > 100);
     });
 
-    // Initialize
-    document.addEventListener('DOMContentLoaded', () => {
-      createBubbles();
-    });
+    document.addEventListener('DOMContentLoaded', createBubbles);
   </script>
 
 </body>
